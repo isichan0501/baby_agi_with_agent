@@ -1,0 +1,6 @@
+openai
+langchain
+tiktoken
+faiss-cpu
+google-search-results
+python-dotenv
