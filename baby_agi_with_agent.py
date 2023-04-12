@@ -12,6 +12,37 @@ from langchain.chains.base import Chain
 from langchain.vectorstores import FAISS
 from langchain.docstore import InMemoryDocstore
 
+import logging
+
+# Set up the logger, handlers, and formatter
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+with open("babyagi.log", "w") as f:
+    pass
+file_handler = logging.FileHandler("babyagi.log")
+file_handler.setLevel(logging.INFO)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter(
+    "%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S\n"
+)
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+# Create a new file handler for task output
+with open("task_output.log", "w") as f:
+    pass
+task_output_handler = logging.FileHandler("task_output.log")
+task_output_handler.setLevel(logging.INFO)
+task_output_handler.setFormatter(formatter)
+
+
 
 from dotenv import load_dotenv
 load_dotenv(verbose=True)
@@ -158,17 +189,19 @@ class BabyAGI(Chain, BaseModel):
         self.task_list.append(task)
 
     def print_task_list(self):
-        print("\033[95m\033[1m" + "\n*****TASK LIST*****\n" + "\033[0m\033[0m")
+        logger.warning("\033[95m\033[1m" + "\n*****TASK LIST*****\n" + "\033[0m\033[0m")
         for t in self.task_list:
-            print(str(t["task_id"]) + ": " + t["task_name"])
+            logger.warning(str(t["task_id"]) + ": " + t["task_name"])
 
     def print_next_task(self, task: Dict):
-        print("\033[92m\033[1m" + "\n*****NEXT TASK*****\n" + "\033[0m\033[0m")
-        print(str(task["task_id"]) + ": " + task["task_name"])
+        logger.warning("\033[92m\033[1m" + "\n*****NEXT TASK*****\n" + "\033[0m\033[0m")
+        logger.warning(str(task["task_id"]) + ": " + task["task_name"])
 
     def print_task_result(self, result: str):
-        print("\033[93m\033[1m" + "\n*****TASK RESULT*****\n" + "\033[0m\033[0m")
-        print(result)
+        logger.warning("\033[93m\033[1m" + "\n*****TASK RESULT*****\n" + "\033[0m\033[0m")
+        logger.warning(result)
+        task_output_handler.emit(logging.makeLogRecord({"msg": result}))
+        
         
     @property
     def input_keys(self) -> List[str]:
@@ -222,7 +255,7 @@ class BabyAGI(Chain, BaseModel):
                 )
             num_iters += 1
             if self.max_iterations is not None and num_iters == self.max_iterations:
-                print("\033[91m\033[1m" + "\n*****TASK ENDING*****\n" + "\033[0m\033[0m")
+                logger.warning("\033[91m\033[1m" + "\n*****TASK ENDING*****\n" + "\033[0m\033[0m")
                 break
         return {}
 
